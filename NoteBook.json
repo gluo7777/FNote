@@ -1,0 +1,42 @@
+{
+    "Java": {
+        "notes": [
+            "Integers are 32 bits",
+            "build app: mvn clean install",
+            "mvn clean",
+            "mvn 2",
+            "mvn clean install to build app"
+        ],
+        "lastModified": 1537490214.2250547
+    },
+    "Maven": {
+        "notes": [
+            "run tests: mvn clean verify -DskipTests=\"false\"",
+            "build app: mvn clean install"
+        ],
+        "lastModified": "<timestamp>"
+    },
+    "java": {
+        "notes": [
+            "mvn",
+            "ttioertjeio",
+            "@#$#@$#@@#i29-=43-124=1=14-",
+            "sgs"
+        ],
+        "lastModified": 1537497081.7411802
+    },
+    "random": {
+        "notes": [
+            "324242",
+            "23r32r"
+        ],
+        "lastModified": 1537496999.7498794
+    },
+    "random2": {
+        "notes": [
+            "retetoie",
+            "retetoi"
+        ],
+        "lastModified": 1537497009.4773865
+    }
+}
