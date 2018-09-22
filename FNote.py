@@ -1,26 +1,32 @@
 # CLI
 
-import sys,re,json,time
+import sys,re,json,time,os
+from pathlib import Path
 
 def log(msg):
     print(f'LOG:::{msg}')
+
+def next(msg='Enter: ',default=''):
+    try:
+        return input(msg)
+    except EOFError:
+        return default
 
 class FNote(object):
 
     def readdata(self):
         log(f'Generating notebook from {self.file}')
-        with open(self.file, mode='r') as fp:
-            return json.load(fp)
+        mode = 'r' if os.path.exists(self.file) else 'x+'
+        with open(self.file, mode) as fp:
+            if os.stat(self.file).st_size == 0:
+                return {}
+            else:
+                return json.load(fp)
     
     def writedata(self):
         log(f'closing and saving to {self.file}')
         with open(file=self.file, mode='w') as fp:
             return json.dump(self.notebook,fp)
-
-    def __init__(self,file):
-        super(FNote, self).__init__()
-        self.file = file
-        self.notebook = self.readdata()
 
     def get_heading(self,heading):
         if heading not in self.notebook:
@@ -41,7 +47,7 @@ class FNote(object):
         """save [OPTION]... [header [tokens]]"""
         log(f'save {args}')
         if len(args) >= 2:
-            self.add_note(args[0], ''.join(args[1:]))
+            self.add_note(args[0], ' '.join(args[1:]))
         else:
             heading = args[0] if len(args) == 1 else input('Enter heading: ')
             while True:
@@ -49,36 +55,56 @@ class FNote(object):
                 if txt.lower() == 'stop':
                     break
                 self.add_note(heading, txt)
+    
+    def __init__(self,file):
+        super(FNote, self).__init__()
+        self.file = file
+        self.notebook = self.readdata()
+        self.switch = {
+            'save' : lambda args: self.save(args)
+        }
 
-def listen(file):
-    # todo: move cmd executions to new method
-    fnote = FNote(file)
-    switch = {
-        'save' : lambda args: fnote.save(args)
-    }
-    exitcmds = set(['stop','exit','end'])
-    while True:
+    def handle(self):
         try:
-            tokens = re.split(r'\\s+',input('Enter cmd: '))
+            tokens = re.split(r'\s+',input('Enter cmd: '))
             cmd = tokens[0].lower()
-            if cmd in exitcmds or not cmd in switch:
-                return
+            if not cmd in self.switch:
+                return False
             else:
-                switch[cmd](tokens[1:]) 
+                self.switch[cmd](tokens[1:])
+                return True
         except EOFError | IndexError:
-            return
+            return False
+
+class FConfig(object):
+    def __init__(self):
+        try:
+            with open('FNote.json','x') as fp:
+                notedir = next('Enter notes directory (empty for installation directory): ')
+                notebook = next('Enter name of note book: ','NoteBook') + '.json'
+                self.config = {
+                    "notedir" : notedir
+                    ,"notebook" : notebook
+                }
+                json.dump(self.config,fp)
+        except FileExistsError:
+            with open('FNote.json','r') as fp:
+                self.config = json.load(fp)
         finally:
-            fnote.writedata()
+            self.notebook = Path(self.config['notedir'],self.config['notebook']).name
+
+    def fnote(self):
+        return FNote(self.notebook)
 
 def main():
-    # todo: Ask first time, then save in config file
-    basedir = r'C:\\Users\\gluo7\\Desktop\\Shared Projects\\FNote'
-    notebook = r'NoteBook.json'
-    notebook = basedir + r'\\' + notebook
+    fnote = FConfig().fnote()
     args = sys.argv[1:] # Exclude execution
     log(f'Arguments=[{" ".join(args)}]')
-    if len(args) == 0:
-        listen(notebook)
+    if len(args) == 0: 
+        while True and fnote.handle():  pass
+    else:
+        fnote.handle()
+    fnote.writedata()
 
 if __name__ == '__main__':
     main()
