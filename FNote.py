@@ -96,7 +96,7 @@ class FNote(object):
             'save' : lambda args: self.save(args)
             ,'find' : lambda args: self.find(args)
             ,'help' : lambda args: print('save [OPTION]... [header [tokens]]'\
-                                         'find [OPTION]... [-h <header>] <text>')
+                                         '\nfind [OPTION]... [-h <header>] <text>')
         }
 
     def handle(self):
