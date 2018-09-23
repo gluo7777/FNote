@@ -3,8 +3,11 @@
 import sys,re,json,time,os
 from pathlib import Path
 
+LOG=False
+
 def log(msg):
-    print(f'LOG:::{msg}')
+    if LOG:
+        print(f'LOG:::{msg}')
 
 def next(msg='Enter: ',default=''):
     try:
@@ -39,9 +42,38 @@ class FNote(object):
     def add_note(self,heading,line):
         self.get_heading(heading)['notes'].append(line)
         self.get_heading(heading)['lastModified'] = time.time()
+
+    def all_matched_notes(self,heading,tokens):
+        matches = []
+        for note in self.notebook[heading]['notes']:
+            for token in tokens:
+                if token in note:
+                    matches.append(f'{heading}:{note}')
+                    break
+        return matches
+
+    def find_notes(self,heading=None,tokens=[]):
+        log(f'finding {tokens} in {heading}')
+        matches = []
+        if heading is None:
+            for head in self.notebook:
+                matches.extend(self.all_matched_notes(head,tokens))
+        elif heading in self.notebook:
+            matches = self.all_matched_notes(heading,tokens)
+        for match in matches:
+            print(f'\t{match}')
     
     def find(self,args):
         """find [OPTION]... [h <header>] <text>"""
+        log(f'finding {args}')
+        if len(args) == 0:
+            print('find missing required <text>.\nTry help cmd.')
+            return
+        elif '-h' == args[0]:
+            self.find_notes(args[1], args[2:])
+        else:
+            for heading in self.notebook:
+                self.find_notes(heading, args)
 
     def save(self,args):
         """save [OPTION]... [header [tokens]]"""
@@ -62,6 +94,9 @@ class FNote(object):
         self.notebook = self.readdata()
         self.switch = {
             'save' : lambda args: self.save(args)
+            ,'find' : lambda args: self.find(args)
+            ,'help' : lambda args: print('save [OPTION]... [header [tokens]]'\
+                                         'find [OPTION]... [-h <header>] <text>')
         }
 
     def handle(self):
